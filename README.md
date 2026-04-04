@@ -12,7 +12,8 @@ pinned: false
 **"The first high-fidelity, deterministic SRE simulation environment for Autonomous AI Agents."**
 
 [![OpenEnv Compliant](https://img.shields.io/badge/OpenEnv-1.0-blueviolet?style=for-the-badge)](https://github.com/openenv/spec)
-[![Deployed on HF](https://img.shields.io/badge/Deployed-Hugging%20Face-yellow?style=for-the-badge)](https://huggingface.co/spaces)
+[![Multi-Mode Deployment](https://img.shields.io/badge/Deployment-Multi--Mode-green?style=for-the-badge)](https://huggingface.co/docs/hub/spaces-sdks-docker)
+[![Deployed on HF](https://img.shields.io/badge/Deployed-Hugging%20Face-yellow?style=for-the-badge)](https://huggingface.co/spaces/mohit0011/triage-x)
 
 ---
 
@@ -43,6 +44,7 @@ graph TD
 *   **⚖️ Multi-Dimensional Grading:** Graders don't just check "Did it work?". They analyze **SLA Stability**, **Budget Utilization**, and **Action Efficiency**.
 *   **📽️ Observability Dashboard:** Includes a minimalist React/Vite "War Room" dashboard for human verification of agent trajectories.
 *   **📦 OpenEnv Spec Native:** Strictly implements `POST /reset`, `POST /step`, `GET /state`, `GET /tasks`, `GET /score`, and `GET /health`.
+*   **🐍 Multi-Mode Compliance:** Fully compliant with Python-based OpenEnv validators using `pyproject.toml`, `uv.lock`, and a standard `server` entry point.
 
 ---
 
@@ -98,11 +100,22 @@ Agents specify an `action` and a `target`:
 
 ## 🛠️ Setup & Local Execution
 
-### 1. Boot Backend & Node Server (Port 7860)
+### Option A: Python / UV (Recommended for Validators)
+The environment is compatible with `uv` and standard Python entry points:
+```bash
+# Install dependencies
+uv sync
+
+# Start the environment server (Wraps Node.js backend)
+uv run server
+```
+
+### Option B: Native Node.js Backend
+If you prefer running the core server directly:
 ```bash
 cd server
 npm install
-npm run start
+npm start
 ```
 
 ### 2. Boot Observability Dashboard (Port 5173)
@@ -123,7 +136,7 @@ python3 inference.py
 ---
 
 ## 🐳 Container Deployment (HF Spaces)
-Root contains a compliant `Dockerfile`:
+Root contains a compliant `Dockerfile`. The space is configured as a `docker` SDK space but supports multi-mode interaction via the `server` entry point.
 ```bash
 docker build -t triage-x .
 docker run -p 7860:7860 triage-x
