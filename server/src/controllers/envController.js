@@ -69,4 +69,21 @@ async function healthCheck(req, res) {
   });
 }
 
-module.exports = { resetEnv, stepEnv, getState, getTasks, getScore, healthCheck };
+async function welcome(req, res) {
+  return res.status(200).json({
+    message: 'Welcome to the TRIAGE-X Incident Response Benchmark Engine.',
+    spec: 'OpenEnv 1.0 Compliant',
+    author: 'Mohit Mudgil',
+    endpoints: {
+      reset: 'POST /reset',
+      step: 'POST /step',
+      state: 'GET /state',
+      tasks: 'GET /tasks',
+      score: 'GET /score',
+      health: 'GET /health',
+    },
+    documentation: 'https://github.com/mohit4901/round1_triagex',
+  });
+}
+
+module.exports = { resetEnv, stepEnv, getState, getTasks, getScore, healthCheck, welcome };

@@ -1,135 +1,51 @@
-# TRIAGE-X Reward Design
+# ⚖️ TRIAGE-X Reward Function Design
+**"Dense Trajectory Shaping for Efficient Agent Reasoning."**
 
-## Overview
-
-TRIAGE-X uses a shaped reward system rather than a binary reward.
-
-This is important because incident response is not a one-step success/fail problem.
-
-A good agent should be rewarded not only for final recovery, but also for:
-- useful diagnosis,
-- efficient intervention,
-- correct prioritisation,
-- avoiding harmful behavior.
+In TRIAGE-X, reward signals are not just binary outcomes. We use a **Composite Reward Function** that encourages diagnostic thoroughness while penalizing reckless behavior.
 
 ---
 
-## Why Reward Shaping Is Necessary
+## 📐 The Reward Equation
+At every step $t$, the reward $R_t$ is calculated as the sum of several weighted components:
 
-If the environment only rewarded final success, then:
+$$ R_t = H_t + I_t + D_t + P_t - \Omega_t $$
 
-- useful diagnosis would appear valueless,
-- intermediate recovery would not be recognized,
-- budget efficiency would be weakly incentivized,
-- poor-but-lucky strategies could score too well.
-
-TRIAGE-X instead rewards meaningful progress while still preserving a strong final score signal.
-
----
-
-## Reward Components
-
-### 1. Diagnostic Value
-
-Useful inspection actions receive positive reward when they help reveal likely root causes.
-
-Examples:
-- inspecting the true bottleneck,
-- checking an upstream dependency before acting.
-
-This encourages evidence-based intervention instead of blind action.
+Where:
+- **$H_t$ (Health Improvement):** Points for restoring component-level health (0.0 to 1.0).
+- **$I_t$ (Impact Reduction):** Points for reducing `customer_impact` (Primary Goal).
+- **$D_t$ (Diagnostic Value):** Small rewards for using `inspect` actions for the *first* time on relevant components.
+- **$P_t$ (Root Cause Progress):** Large "Breakthrough" rewards when the hidden root cause is addressed.
+- **$\Omega_t$ (Penalty):** Subtractions for budget waste, no-ops, or re-cycling already healthy services.
 
 ---
 
-### 2. Health Improvement
+## 🔍 Detailed Component Breakdown
 
-When service health improves meaningfully after an action, reward is assigned proportionally.
+### 1. Diagnostic Signal ($D_t$)
+To prevent agents from guessing, we reward **Knowledge Acquisition**. An agent that inspects a faulty DB before restarting it gets a higher total reward than one that restarts it blindly.
+*   *Note:* Repeated inspections on the same component yield zero reward to prevent infinite loops.
 
-This ensures agents are rewarded for actual stabilization rather than action count.
+### 2. Operational Health ($H_t$)
+We track the delta of the `system_health` variable. If an action stabilizes a service from 0.4 to 0.9, the agent receives a positive gradient immediately.
 
----
+### 3. Customer-Facing Impact ($I_t$)
+This is the **North Star metric**. Since the goal of an SRE is to save user experience, reducing `customer_impact` carries the highest passive weight in the trajectory.
 
-### 3. Customer Impact Reduction
-
-If customer-facing harm decreases, the agent receives positive reward.
-
-This keeps the benchmark aligned with operational reality:
-the real goal is not just fixing internals, but reducing user-visible damage.
-
----
-
-### 4. Root Cause Progress
-
-High-value actions that directly address the true failure path receive strong reward.
-
-Examples:
-- rollback on a bad deployment,
-- stabilizing the true upstream bottleneck.
-
-This helps distinguish:
-- symptom treatment,
-- root-cause resolution.
+### 4. Safety & Efficiency Penalties ($\Omega_t$)
+*   **The "Reckless Reboot" Penalty:** Restarting a healthy service (Health > 0.9) incurs a harsh penalty to simulate unnecessary downtime.
+*   **The "Quiet" Penalty:** Each step taken costs a tiny "Engineering Hour" penalty, forcing the agent to find the *shortest* path to recovery.
 
 ---
 
-### 5. Penalties
+## 🏆 Final Grading vs. Step Reward
+TRIAGE-X makes a strict distinction between **Learning Signals** (Shaped Reward) and **Performance Score** (Final Grader).
 
-Negative reward is assigned for harmful or wasteful behavior, including:
+The **Final Grader** (called at `done=true`) ignores the trajectory and strictly evaluates the **Final State**:
+- Is the system stable?
+- Is the root cause dead?
+- How much money (budget) is left?
 
-- no-op spam,
-- repeated low-value actions,
-- wasting budget,
-- masking symptoms without solving the issue,
-- silencing meaningful alerts.
-
-This prevents agents from gaming the environment with trivial loops.
+This ensures that "lucky but inefficient" agents score lower than "precise and knowledgeable" agents.
 
 ---
-
-## Final Score vs Step Reward
-
-TRIAGE-X separates:
-
-### Step Reward
-Used during the episode to encourage good decision-making.
-
-### Final Score
-Used at episode end to evaluate overall policy quality.
-
-This separation is intentional.
-
-A policy can earn some positive intermediate reward while still performing poorly overall if it:
-- overspends,
-- delays too long,
-- fails to stabilize the environment.
-
-Likewise, a policy that takes a clean, efficient recovery path should score highly even with only a few actions.
-
----
-
-## Design Philosophy
-
-The reward system is designed to encourage agents that are:
-
-- selective,
-- causal,
-- efficient,
-- operationally grounded.
-
-It is explicitly designed to discourage:
-- brute-force intervention,
-- random action exploration,
-- noisy action spam,
-- “fix everything” behavior.
-
----
-
-## Why This Matters for Benchmarking
-
-Many toy environments reward simple local improvements.
-
-TRIAGE-X instead rewards something closer to real operational competence:
-
-> making the right intervention, at the right time, for the right reason.
-
-That is what makes it a meaningful benchmark rather than a simple simulator.
+*TRIAGE-X Reward Design Documentation - Meta x Hugging Face Hackathon*

@@ -1,144 +1,45 @@
-Core Components
-1. API Layer
+# 🧩 TRIAGE-X Task & Scenario Design
+**"Engineering complexity into deterministic benchmarks."**
 
-The API layer provides a lightweight interface for external agents and evaluation scripts.
+The power of TRIAGE-X lies in its **layered difficulty progression**. Each task is designed to test a specific cognitive skill in an AI agent: scalability reasoning, cascading fault localization, and multi-incident prioritization.
 
-Supported endpoints:
+---
 
-POST /reset
-POST /step
-GET /state
-GET /tasks
-GET /score
-GET /health
+## 🟢 Task 1: `easy_signal_noise`
+**Objective:** Resolve a simple service bottleneck under misleading alert conditions.
 
-This allows TRIAGE-X to be used both interactively and programmatically.
+*   **Failure Pattern:** **Queue Backpressure.** The `api_gateway` is healthy, but a downstream `notification_queue` is backing up due to a sudden traffic surge.
+*   **The Trap:** The agent will see "Critical" alerts for the Gateway (Symptom), but the root cause is the Queue depth.
+*   **Solution Path:** The agent must `scale_service` on the queue or `throttle_traffic` to allow the backlog to clear. 
+*   **Evaluation Focus:** Basic signal vs. noise identification.
 
-2. Task Loader
+---
 
-Tasks are defined as JSON scenario files and loaded at episode reset.
+## 🟡 Task 2: `medium_hidden_dependency`
+**Objective:** Identify a cascading failure where the root cause is invisible to superficial metrics.
 
-Each task includes:
+*   **Failure Pattern:** **Latency Propagation.** A `database_replica` has high disk I/O latency. This causes the `payment_worker` to slow down, which eventually makes the `api_gateway` time out.
+*   **The Trap:** The Database metrics look "okay" (Health 1.0) but its latency is high. The API Gateway looks "Broken" (Health 0.4).
+*   **Solution Path:** The agent must use `inspect_dependency` to find the link and then `restart_service` or `failover` the database.
+*   **Evaluation Focus:** Dependency tracing and multi-step root cause analysis.
 
-service topology,
-initial health metrics,
-alerts,
-hidden root cause,
-success conditions,
-optional traps or structured variants.
+---
 
-This design makes tasks easy to extend while keeping the engine logic consistent.
+## 🔴 Task 3: `hard_multi_incident`
+**Objective:** Manage concurrent system failures while balancing a rapidly depleting budget.
 
-3. State Manager
+*   **Failure Pattern:** **Concurrent Anomalies.** A `memory_leak` in the Auth Service combined with an `unauthorized_attack_spike` on the Analytics pipeline.
+*   **The Trap:** Fixing one issue (e.g., restarting Auth) without addressing the spike will result in the budget being exhausted before the system stabilizes.
+*   **Solution Path:** High-efficiency sequencing. The agent must `throttle_queue` on the spike first (Zero cost) and then `restart_service` on the leak.
+*   **Evaluation Focus:** Resource management, prioritization, and long-term planning.
 
-The environment state is maintained in-memory during each episode.
+---
 
-Tracked state includes:
+## 🧬 Scenario Variants (v1, v2, v3)
+To prevent "Overfitting", each task includes deterministic variants.
+- **v1:** Default scenario path.
+- **v2:** Shifted metrics (e.g., higher initial latency).
+- **v3:** Alternative service names/ID tags to ensure the agent is reading the topology map, not hardcoding service IDs.
 
-service health,
-latency,
-error rate,
-queue depth,
-active alerts,
-customer impact,
-remaining budget,
-action history,
-task metadata.
-
-The state manager is designed to keep the environment deterministic and fully serializable.
-
-4. Observation Builder
-
-The observation builder creates the agent-facing state.
-
-Important internal fields such as:
-
-hidden root cause,
-noisy alert labels,
-trap metadata,
-grading internals,
-
-are intentionally hidden from the agent.
-
-This ensures the benchmark remains a reasoning task rather than a direct lookup problem.
-
-5. Action Handler
-
-The action handler applies deterministic action effects such as:
-
-restart service,
-rollback deploy,
-scale service,
-reroute traffic,
-throttle queue,
-inspect service,
-inspect dependency,
-silence alert,
-noop.
-
-Each action has:
-
-a budget cost,
-service-level effects,
-possible side effects,
-reward implications.
-
-This creates meaningful action trade-offs instead of trivial one-step recovery.
-
-6. Progression Engine
-
-After every action, the environment advances one step.
-
-The progression engine simulates:
-
-passive degradation,
-unresolved incident persistence,
-downstream propagation,
-queue growth,
-latency escalation,
-customer impact drift.
-
-This ensures the environment behaves like a dynamic operational system rather than a static puzzle.
-
-7. Reward Engine
-
-The reward engine scores each step using multiple signals:
-
-useful diagnosis,
-health improvement,
-customer impact reduction,
-root-cause progress,
-harmful actions,
-repeated action penalties,
-wasted budget penalties.
-
-This discourages naive brute-force policies and encourages efficient recovery.
-
-8. Final Grader
-
-At the end of each episode, TRIAGE-X computes a final score in the range [0, 1].
-
-The grader evaluates:
-
-system stability,
-customer harm reduction,
-root cause resolution,
-action efficiency,
-budget utilisation,
-harmful action avoidance.
-
-This creates a richer benchmark than simple “success / fail” environments.
-
-Design Philosophy
-
-TRIAGE-X is designed around the idea that strong agents should not simply react to visible failures.
-
-Instead, they should:
-
-infer likely root causes,
-reason over dependencies,
-ignore misleading signals,
-act efficiently under constraints,
-stop when the system is sufficiently stable.
-
-That makes TRIAGE-X a better fit for realistic agent evaluation than toy single-step control tasks.
+---
+*TRIAGE-X Task Design Documentation - Meta x Hugging Face Hackathon*

@@ -1,16 +1,36 @@
-# React + Vite
+# 📊 TRIAGE-X: Observability NOC Dashboard
+**"Real-time visual telemetry for Autonomous SRE Agents."**
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is the frontend component of the TRIAGE-X benchmark. It provides a minimalist, high-performance Network Operations Center (NOC) interface to visualize agent actions, system health cascades, and alert statuses.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🚀 Features
+*   **Live Telemetry:** Real-time visualization of `system_health` and `customer_impact` metrics.
+*   **Service Topology:** Visual map of active microservices (API Gateway, DB, Payment, etc.) and their health states.
+*   **Action Log:** History of actions taken by the AI agent (e.g. `restart_service`, `throttle_queue`).
+*   **Alert Feed:** Stream of active system alerts (Simulated CloudWatch/Datadog logs).
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🛠️ Local Development
 
-## Expanding the ESLint configuration
+### 1. Prerequisites
+Ensure the **TRIAGE-X Backend** is running on port `7860`.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### 2. Install & Start
+```bash
+npm install
+npm run dev
+```
+The dashboard will be available at `http://localhost:5173`.
+
+---
+
+## 🏗️ Technical Stack
+*   **Framework:** React 18 + Vite
+*   **Styling:** Modern CSS (Glassmorphism & NOC Aesthetics)
+*   **State:** Local polling / Context for environment sync
+
+---
+*Part of the TRIAGE-X Incident Response Benchmark.*

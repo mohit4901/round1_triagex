@@ -189,7 +189,7 @@ Final score: **0.0 → 1.0**
 
 | Variable  | Default     | Description           |
 | --------- | ----------- | --------------------- |
-| PORT      | 3001        | Server port           |
+| PORT      | 7860        | Server port (HF Standard) |
 | NODE_ENV  | development | Environment mode      |
 | LOG_LEVEL | info        | Logging level         |
 | MAX_STEPS | 50          | Max steps per episode |

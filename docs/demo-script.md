@@ -1,39 +1,48 @@
-# TRIAGE-X Demo Script
+# 🎙️ TRIAGE-X Evaluation Demo Script
+**"Watching the Agent Triage a Microservice Cascade in 3 Minutes."**
 
-## Goal
-
-This demo is designed to quickly communicate what TRIAGE-X is, why it matters, and how an autonomous agent interacts with it.
-
-Ideal demo length: **2–4 minutes**
+This script is designed for live evaluation or video demo purposes. It showcases the environment's ability to challenge an agent's reasoning.
 
 ---
 
-## 1. Opening
+## 🎬 Act 1: The Reset (The Incident Starts)
+**Action:** Call `POST /reset` with `task_name: "easy_signal_noise"`.
 
-> TRIAGE-X is a benchmark-style incident response environment for autonomous agents.
-> It simulates backend service outages, noisy alerts, dependency failures, and budget-constrained recovery decisions.
-
----
-
-## 2. Show the Environment API
-
-Open the backend and show:
-
-- `/health`
-- `/tasks`
-- `/reset`
-
-Suggested narration:
-
-> The environment exposes a clean REST interface, so any external policy or agent can interact with it in a reproducible way.
+**Narrator:** *"Notice the initial state. The system health is dropping fast. The API Gateway is firing 'High Latency' alerts. A typical naive agent would restart the Gateway immediately—but in TRIAGE-X, that's a trap."*
 
 ---
 
-## 3. Reset a Task
+## 🎬 Act 2: The Investigation
+**Action:** Call `POST /step` with `action: "inspect_service", target: "api_gateway"`.
 
-Use:
+**Narrator:** *"The agent inspects the Gateway and sees that its internal health is 1.0, but its queue depth is 500. This tells the agent that the bottleneck is downstream. It needs to find the root cause before the budget runs out."*
 
+---
+
+## 🎬 Act 3: The Resolution
+**Action:** Call `POST /step` with `action: "scale_service", target: "payment_worker"`.
+
+**Narrator:** *"The agent identifies the Payment Worker as the bottleneck and adds capacity. Instantly, the Gateway queue begins to drain, customer impact drops, and the System Health recovers. This precision action earned a high reward signal."*
+
+---
+
+## 🎬 Act 4: The Result (Final Grading)
+**Action:** Call `GET /score`.
+
+**Narrator:** *"At the end of the episode, we look at the final grade. The agent succeeded with 80% of its budget remaining and zero wasted reboots. This results in a near-perfect benchmark score of 0.96."*
+
+---
+## 🛠️ Quick CLI Commands for Demo
 ```bash
-curl -X POST http://localhost:5050/reset \
-  -H "Content-Type: application/json" \
-  -d '{"task_name":"easy_signal_noise"}'
+# 1. Start the incident
+curl -X POST http://localhost:7860/reset -d '{"task_name":"easy_signal_noise"}'
+
+# 2. Inspect the symptom
+curl -X POST http://localhost:7860/step -d '{"action":"inspect_service","target":"api_gateway"}'
+
+# 3. Apply the fix
+curl -X POST http://localhost:7860/step -d '{"action":"scale_service","target":"payment_worker"}'
+
+# 4. Check the score
+curl http://localhost:7860/score
+```

@@ -1,176 +1,61 @@
-# TRIAGE-X Architecture
+# 🏗️ TRIAGE-X System Architecture
+**"Deterministic State Management for High-Fidelity AI Evaluation."**
 
-## Overview
-
-TRIAGE-X is a deterministic, benchmark-style incident response environment designed for evaluating autonomous agents in service reliability scenarios.
-
-It simulates operational incidents across interconnected backend services and exposes an OpenEnv-style REST interface for agent interaction.
-
-The system is intentionally structured to support:
-
-- reproducible evaluation,
-- multi-step decision making,
-- noisy observations,
-- dependency-aware reasoning,
-- cost-sensitive recovery planning.
+TRIAGE-X is architected as a decoupled simulation engine that exposes a standardized REST interface. The core philosophy is to provide a "Black Box" environment where the agent's only window into the system is through noisy telemetry, mirroring real-world SRE conditions.
 
 ---
 
-## High-Level Flow
+## 🛰️ High-Level System Flow
+The interaction follows the classic RL loop (Observation -> Action -> Reward) but is strictly constrained by a RESTful state machine.
 
-```text
-Agent / Policy
-      ↓
-REST API (/reset, /step, /score, /state)
-      ↓
-Simulator Orchestrator
-      ↓
-Environment State + Task Definition
-      ↓
-Action Handling + Progression + Reward + Grading
+```mermaid
+sequenceDiagram
+    participant Agent as AI Agent (Python SDK)
+    participant API as TRIAGE-X REST Layer
+    participant Engine as Simulation Engine
+    participant State as In-Memory State
+    
+    Agent->>API: POST /reset {task_name}
+    API->>Engine: Initialize Scenario
+    Engine->>State: Seed Services & Faults
+    State-->>Agent: Initial Observation JSON
+    
+    loop Episode Loop
+        Agent->>API: POST /step {action, target}
+        API->>Engine: Process Action
+        Engine->>State: Mutate Health/Metrics
+        Engine->>State: Progress Time (Cascades)
+        State-->>Agent: Result (Obs, Reward, Done)
+    end
+```
 
+---
 
-Core Components
-1. API Layer
+## 📦 Core Subsystems
 
-The API layer provides a lightweight interface for external agents and evaluation scripts.
+### 1. The Simulation Engine (`/server/src/engine/`)
+The heart of TRIAGE-X. It handles the discrete-time progression of the environment.
+*   **Action Handler:** Maps agent intents (e.g., `restart_service`) to deterministic state mutations.
+*   **Progression Engine:** Simulates "Entropy" and "Cascades". If a database is slow, the API Gateway latency naturally increases in the next tick.
+*   **State Manager:** A strictly isolated, deep-cloned state store that ensures zero "leakage" between evaluation episodes.
 
-Supported endpoints:
+### 2. Task & Scenario Loader
+Scenarios are defined in JSON templates. Each scenario includes:
+- **Topology:** The directed dependency graph of services.
+- **Fault Injection:** Hidden variables that define the root cause (e.g., `memory_leak` or `unauthorized_traffic_spike`).
+- **Telemetry Noise:** Configuration for how "noisy" the alerts should be for that specific difficulty.
 
-POST /reset
-POST /step
-GET /state
-GET /tasks
-GET /score
-GET /health
+### 3. Programmable Reward & Grader
+*   **Reward Engine:** Calculates "Dense" rewards at every step to provide a strong gradient for learning agents. It penalizes wasted budget and rewards diagnostic steps.
+*   **Final Grader:** A terminal evaluator that provides a normalized `[0.0 - 1.0]` score based on the final system stability and efficiency.
 
-This allows TRIAGE-X to be used both interactively and programmatically.
+---
 
-2. Task Loader
+## 🛠️ Data Integrity & Determinism
+To ensure **Reproducible Benchmarking**, TRIAGE-X adheres to these strict rules:
+1. **No Global Randomness:** All "variations" are seeded at the task level (`variant_v1`, `variant_v2`).
+2. **Immutability:** The state is never mutated in place; every `step()` produces a new state snapshot.
+3. **Isolations:** Each `reset()` completely purges the memory, preventing cross-episode contaminants.
 
-Tasks are defined as JSON scenario files and loaded at episode reset.
-
-Each task includes:
-
-service topology,
-initial health metrics,
-alerts,
-hidden root cause,
-success conditions,
-optional traps or structured variants.
-
-This design makes tasks easy to extend while keeping the engine logic consistent.
-
-3. State Manager
-
-The environment state is maintained in-memory during each episode.
-
-Tracked state includes:
-
-service health,
-latency,
-error rate,
-queue depth,
-active alerts,
-customer impact,
-remaining budget,
-action history,
-task metadata.
-
-The state manager is designed to keep the environment deterministic and fully serializable.
-
-4. Observation Builder
-
-The observation builder creates the agent-facing state.
-
-Important internal fields such as:
-
-hidden root cause,
-noisy alert labels,
-trap metadata,
-grading internals,
-
-are intentionally hidden from the agent.
-
-This ensures the benchmark remains a reasoning task rather than a direct lookup problem.
-
-5. Action Handler
-
-The action handler applies deterministic action effects such as:
-
-restart service,
-rollback deploy,
-scale service,
-reroute traffic,
-throttle queue,
-inspect service,
-inspect dependency,
-silence alert,
-noop.
-
-Each action has:
-
-a budget cost,
-service-level effects,
-possible side effects,
-reward implications.
-
-This creates meaningful action trade-offs instead of trivial one-step recovery.
-
-6. Progression Engine
-
-After every action, the environment advances one step.
-
-The progression engine simulates:
-
-passive degradation,
-unresolved incident persistence,
-downstream propagation,
-queue growth,
-latency escalation,
-customer impact drift.
-
-This ensures the environment behaves like a dynamic operational system rather than a static puzzle.
-
-7. Reward Engine
-
-The reward engine scores each step using multiple signals:
-
-useful diagnosis,
-health improvement,
-customer impact reduction,
-root-cause progress,
-harmful actions,
-repeated action penalties,
-wasted budget penalties.
-
-This discourages naive brute-force policies and encourages efficient recovery.
-
-8. Final Grader
-
-At the end of each episode, TRIAGE-X computes a final score in the range [0, 1].
-
-The grader evaluates:
-
-system stability,
-customer harm reduction,
-root cause resolution,
-action efficiency,
-budget utilisation,
-harmful action avoidance.
-
-This creates a richer benchmark than simple “success / fail” environments.
-
-Design Philosophy
-
-TRIAGE-X is designed around the idea that strong agents should not simply react to visible failures.
-
-Instead, they should:
-
-infer likely root causes,
-reason over dependencies,
-ignore misleading signals,
-act efficiently under constraints,
-stop when the system is sufficiently stable.
-
-That makes TRIAGE-X a better fit for realistic agent evaluation than toy single-step control tasks.
+---
+*TRIAGE-X Architecture Documentation - Meta x Hugging Face Hackathon*
