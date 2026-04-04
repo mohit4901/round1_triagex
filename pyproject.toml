@@ -8,8 +8,12 @@ authors = [
 dependencies = [
     "openai>=1.2.0",
     "requests>=2.31.0",
-    "python-dotenv>=1.0.0"
+    "python-dotenv>=1.0.0",
+    "openenv-core>=0.2.0"
 ]
+
+[project.scripts]
+server = "server.app:main"
 
 [build-system]
 requires = ["setuptools>=61.0"]
