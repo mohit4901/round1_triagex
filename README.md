@@ -1,6 +1,5 @@
 ---
 title: TRIAGE-X Benchmark
-emoji: 🛠️
 colorFrom: blue
 colorTo: indigo
 sdk: docker
@@ -35,7 +34,7 @@ graph TD
 
 ---
 
-## 🚀 Key Differentiators (Winner Features)
+## 🚀 Key Differentiators 
 
 > [!IMPORTANT]
 > **Real-World Utility (30% Weight):** Models authentic microservice failure patterns including **Backpressure Bottlenecks**, **Hidden Cascading Dependencies**, and **Alert Fatigue**.
