@@ -40,7 +40,7 @@ function reset(taskName) {
     recent_actions: [],
     action_history: [],
     cumulative_reward: 0,
-    score: 0,
+    score: 0.0001,
     done: false,
     success: false,
     cascade_triggered: false,

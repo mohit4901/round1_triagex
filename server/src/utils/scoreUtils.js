@@ -12,6 +12,19 @@ function clamp(val, min, max) {
 }
 
 /**
+ * Clamp a value strictly between min and max (exclusive).
+ * Uses a tiny epsilon to avoid 0.0 and 1.0.
+ * @param {number} val
+ * @param {number} min
+ * @param {number} max
+ * @returns {number}
+ */
+function strictClamp(val, min = 0, max = 1) {
+  const epsilon = 0.0001;
+  return Math.min(Math.max(val, min + epsilon), max - epsilon);
+}
+
+/**
  * Round a float to N decimal places for deterministic output.
  * @param {number} val
  * @param {number} decimals
@@ -42,4 +55,4 @@ function normaliseReward(raw) {
   return roundTo(clamp(raw, -100, 100), 4);
 }
 
-module.exports = { clamp, roundTo, averageSystemHealth, normaliseReward };
+module.exports = { clamp, strictClamp, roundTo, averageSystemHealth, normaliseReward };

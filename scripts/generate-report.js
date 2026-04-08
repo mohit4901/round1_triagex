@@ -46,7 +46,7 @@ async function runTask(task) {
     steps++;
   }
 
-  return { task, success: false, score: 0 };
+  return { task, success: false, score: 0.0001 };
 }
 
 async function main() {

@@ -1,7 +1,7 @@
 'use strict';
 
 const stateManager = require('./stateManager');
-const { clamp, roundTo, averageSystemHealth } = require('../utils/scoreUtils');
+const { clamp, strictClamp, roundTo, averageSystemHealth } = require('../utils/scoreUtils');
 const scoringMeta = require('../data/metadata/scoring.json');
 
 /**
@@ -88,17 +88,17 @@ function computeFinalScore() {
     w.budget_utilisation * budgetScore +
     w.harmful_action_avoidance * harmScore;
 
-  const score = roundTo(clamp(raw, 0, 1), 4);
+  const score = roundTo(strictClamp(raw, 0, 1), 4);
 
   return {
     score,
     breakdown: {
-      system_stability: roundTo(stabilityScore, 4),
-      customer_harm_reduction: roundTo(customerScore, 4),
-      root_cause_resolution: rootCauseScore,
-      action_efficiency: roundTo(efficiencyScore, 4),
-      budget_utilisation: roundTo(budgetScore, 4),
-      harmful_action_avoidance: roundTo(harmScore, 4),
+      system_stability: roundTo(strictClamp(stabilityScore), 4),
+      customer_harm_reduction: roundTo(strictClamp(customerScore), 4),
+      root_cause_resolution: strictClamp(rootCauseScore),
+      action_efficiency: roundTo(strictClamp(efficiencyScore), 4),
+      budget_utilisation: roundTo(strictClamp(budgetScore), 4),
+      harmful_action_avoidance: roundTo(strictClamp(harmScore), 4),
     },
     passed: score >= 0.5,
     root_cause_resolved: state.root_cause_resolved,
