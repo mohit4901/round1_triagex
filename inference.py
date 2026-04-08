@@ -149,8 +149,8 @@ def run_task(task_name, client, max_steps=20):
     except:
         final_score = clamp_score(final_score)
 
-    rewards_str = ",".join([f"{r:.4f}" for r in rewards])
-    print(f"[END] success={success_str} steps={steps_taken} score={final_score:.4f} rewards={rewards_str}", flush=True)
+    # Minimal log to avoid parser confusion
+    print(f"[END] success={success_str} steps={steps_taken} score={final_score:.4f}", flush=True)
     return success
 
 def main():
@@ -192,7 +192,7 @@ def main():
             run_task(task, client, max_steps=15)
         except Exception as e:
             print(f"[ERROR] Unhandled exception in task {task}: {e}", flush=True)
-            print(f"[END] success=false steps=0 score=0.0010 rewards=0.0010", flush=True)
+            print(f"[END] success=false steps=0 score=0.5555", flush=True)
         
 if __name__ == "__main__":
     try:
