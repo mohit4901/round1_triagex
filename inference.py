@@ -110,7 +110,7 @@ def run_task(task_name, client, max_steps=20):
             reward_val = res.get("reward", 0.0)
             
             if "error" in res and res["error"]:
-                 error_msg = str(res["error"])
+                 error_msg = str(res["error"]).replace('\n', ' ')
         except Exception as e:
             reward_val = 0.0
             done = True
