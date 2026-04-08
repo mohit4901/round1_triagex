@@ -40,7 +40,7 @@ function reset(taskName) {
     recent_actions: [],
     action_history: [],
     cumulative_reward: 0,
-    score: 0.0001,
+    score: 0.1,
     done: false,
     success: false,
     cascade_triggered: false,
@@ -93,11 +93,14 @@ function step(validatedAction) {
   const effects = actionHandler.applyAction(validatedAction);
 
   // 2. Compute reward
-  const { reward, breakdown } = rewardEngine.computeReward(
+  const { reward: rawReward, breakdown } = rewardEngine.computeReward(
     prevState,
     validatedAction,
     effects
   );
+
+  // CRITICAL FIX: Ensure returned reward is in (0.01, 0.99)
+  const reward = require('../utils/scoreUtils').normaliseReward(rawReward);
 
   // 3. Advance time (passive degradation + customer impact update)
   progressionEngine.advanceStep();
@@ -118,7 +121,7 @@ function step(validatedAction) {
   // 6. Check termination
   const { done, success, reason } = progressionEngine.checkTermination();
 
-  let finalScore = 0;
+  let finalScore = 0.1;
   let scoreBreakdown = null;
 
   if (done) {
