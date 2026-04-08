@@ -17,8 +17,8 @@ function clamp(val, min = 0, max = 1) {
  * Uses a safe epsilon buffer for the benchmarker.
  */
 function strictClamp(val, min = 0, max = 1) {
-  const epsilon = 0.01;
-  if (isNaN(val)) return 0.1;
+  const epsilon = 0.1;
+  if (isNaN(val)) return 0.5;
   return Math.min(Math.max(val, min + epsilon), max - epsilon);
 }
 

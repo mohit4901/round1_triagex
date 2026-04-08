@@ -102,8 +102,8 @@ function computeFinalScore() {
     },
     passed: score >= 0.5,
     root_cause_resolved: state.root_cause_resolved,
-    final_health: roundTo(finalHealth, 4),
-    final_customer_impact: roundTo(finalImpact, 2),
+    final_health: strictClamp(finalHealth),
+    final_customer_impact: strictClamp(finalImpact / 100), // Map 0-100 impact to 0-1
   };
 }
 

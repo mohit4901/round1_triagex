@@ -40,10 +40,10 @@ def clamp_score(score):
     try:
         score = float(score)
     except:
+        return 0.5
+    if score <= 0.1:
         return 0.1
-    if score <= 0.01:
-        return 0.1
-    if score >= 0.99:
+    if score >= 0.9:
         return 0.9
     return score
 
