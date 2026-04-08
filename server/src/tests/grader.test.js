@@ -83,14 +83,52 @@ describe('Grader', () => {
     expect(bd).toHaveProperty('harmful_action_avoidance');
   });
 
-  test('score is always between 0 and 1', () => {
+  test('score is always strictly between 0 and 1', () => {
     for (const taskName of ['easy_signal_noise', 'medium_hidden_dependency', 'hard_multi_incident']) {
       simulator.reset(taskName);
       stateManager.patchState({ done: true });
       const result = computeFinalScore();
-      expect(result.score).toBeGreaterThanOrEqual(0);
-      expect(result.score).toBeLessThanOrEqual(1);
+      expect(result.score).toBeGreaterThan(0);
+      expect(result.score).toBeLessThan(1);
     }
+  });
+
+  test('perfect conditions should be strictly less than 1.0', () => {
+    simulator.reset('easy_signal_noise');
+    stateManager.patchState({
+      root_cause_resolved: true,
+      customer_impact: 0,
+      step_count: 0, // Force maximum efficiency for test
+      remaining_budget: 100,
+      done: true,
+      success: true,
+    });
+    const state = stateManager.getState();
+    state.services.forEach(s => stateManager.updateService(s.name, { health: 1.0 }));
+    
+    const result = computeFinalScore();
+    expect(result.score).toBeLessThan(1.0);
+    expect(result.score).toBeGreaterThan(0.9);
+  });
+
+  test('worst conditions should be strictly greater than 0.0', () => {
+    simulator.reset('hard_multi_incident');
+    stateManager.patchState({
+      root_cause_resolved: false,
+      customer_impact: 100,
+      step_count: 200,
+      remaining_budget: 0,
+      cascade_triggered: true,
+      done: true,
+      success: false,
+      reason: 'budget_exhausted'
+    });
+    const state = stateManager.getState();
+    state.services.forEach(s => stateManager.updateService(s.name, { health: 0.0 }));
+
+    const result = computeFinalScore();
+    expect(result.score).toBeGreaterThan(0.0);
+    expect(result.score).toBeLessThan(0.1);
   });
 
   test('different outcomes should produce different scores (non-constant grader)', () => {
