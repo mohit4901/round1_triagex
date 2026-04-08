@@ -32,6 +32,17 @@ function strictClamp01(value) {
  */
 function computeFinalScore() {
   const state = stateManager.getState();
+
+  // Safety fallback if state is not initialized
+  if (!state || !state.services) {
+    return {
+      score: 0.0001,
+      passed: false,
+      success: false,
+      error: 'State not initialised'
+    };
+  }
+
   const w = scoringMeta.weights;
   const thresholds = scoringMeta.thresholds;
 
