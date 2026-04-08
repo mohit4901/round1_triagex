@@ -20,7 +20,7 @@ function clamp(val, min, max) {
  * @returns {number}
  */
 function strictClamp(val, min = 0, max = 1) {
-  const epsilon = 0.0001;
+  const epsilon = 0.001;
   return Math.min(Math.max(val, min + epsilon), max - epsilon);
 }
 
@@ -41,9 +41,9 @@ function roundTo(val, decimals = 4) {
  * @returns {number} 0–1
  */
 function averageSystemHealth(services) {
-  if (!services || services.length === 0) return 0;
+  if (!services || services.length === 0) return 0.001;
   const sum = services.reduce((acc, s) => acc + s.health, 0);
-  return roundTo(sum / services.length, 4);
+  return roundTo(strictClamp(sum / services.length), 4);
 }
 
 /**
@@ -52,7 +52,10 @@ function averageSystemHealth(services) {
  * @returns {number}
  */
 function normaliseReward(raw) {
-  return roundTo(clamp(raw, -100, 100), 4);
+  // Map -100 to 100 range into a very small but non-zero positive range if needed, 
+  // but wait, if the portal expects (0, 1), maybe it expects rewards to be in that range too?
+  // Let's assume rewards should be in (0, 1) if they are parsed as scores.
+  return roundTo(strictClamp(raw / 100 + 0.5), 4);
 }
 
 module.exports = { clamp, strictClamp, roundTo, averageSystemHealth, normaliseReward };

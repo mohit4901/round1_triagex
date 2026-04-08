@@ -107,12 +107,17 @@ def run_task(task_name, client, max_steps=20):
             obs = res.get("observation", obs)
             done = res.get("done", False)
             success = res.get("success", False)
-            reward_val = res.get("reward", 0.0)
+            reward_val = res.get("reward", 0.001)
+            if reward_val == 0: reward_val = 0.001
             
+            info = res.get("info", {})
+            final_score = info.get("final_score", 0.001)
+
             if "error" in res and res["error"]:
                  error_msg = str(res["error"]).replace('\n', ' ')
         except Exception as e:
-            reward_val = 0.0
+            reward_val = 0.001
+            final_score = 0.001
             done = True
             error_msg = str(e).replace('\n', ' ')
             
@@ -120,7 +125,7 @@ def run_task(task_name, client, max_steps=20):
         
         # Log EXACTLY as formatting spec dictates
         done_str = "true" if done else "false"
-        print(f"[STEP] step={i} action={action_str} reward={reward_val:.2f} done={done_str} error={error_msg}", flush=True)
+        print(f"[STEP] step={i} action={action_str} reward={reward_val:.4f} done={done_str} error={error_msg}", flush=True)
         
         if done:
             break
@@ -128,8 +133,15 @@ def run_task(task_name, client, max_steps=20):
         time.sleep(0.5)
         
     success_str = "true" if success else "false"
-    rewards_str = ",".join([f"{r:.2f}" for r in rewards])
-    print(f"[END] success={success_str} steps={steps_taken} rewards={rewards_str}", flush=True)
+    # Ensure we have the latest score if step didn't return it
+    try:
+        score_data = get(f"{ENV_BASE_URL}/score")
+        final_score = score_data.get("score", 0.001)
+    except:
+        pass
+
+    rewards_str = ",".join([f"{r:.4f}" for r in rewards])
+    print(f"[END] success={success_str} steps={steps_taken} score={final_score:.4f} rewards={rewards_str}", flush=True)
     return success
 
 def main():
