@@ -23,7 +23,6 @@ API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
 HF_TOKEN = os.getenv("HF_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-# If using from_docker_image(), but we use direct REST
 LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME")
 
 # TRIAGE-X server URL
@@ -36,6 +35,18 @@ TASKS = [
     "hard_multi_incident"
 ]
 
+def clamp_score(score):
+    """Ensure score is strictly between 0 and 1 (not 0.0, not 1.0)"""
+    try:
+        score = float(score)
+    except:
+        return 0.001
+    if score <= 0.0:
+        return 0.001
+    if score >= 1.0:
+        return 0.999
+    return score
+
 def get(url):
     r = requests.get(url, timeout=20)
     r.raise_for_status()
@@ -47,7 +58,6 @@ def post(url, data):
     return r.json()
 
 def run_task(task_name, client, max_steps=20):
-    # Log EXACTLY as required by the regex
     print(f"[START] task={task_name} env={BENCHMARK} model={MODEL_NAME}", flush=True)
     
     try:
@@ -59,7 +69,8 @@ def run_task(task_name, client, max_steps=20):
     
     rewards = []
     success = False
-    
+    final_score = 0.001
+
     system_prompt = """
     You are an expert Site Reliability Engineer (SRE).
     Action space expects exactly one JSON object: {"action": "string", "target": "string"}.
@@ -87,7 +98,7 @@ def run_task(task_name, client, max_steps=20):
             )
             raw_content = response.choices[0].message.content
             if not raw_content:
-                 raise ValueError("Empty response from LLM")
+                raise ValueError("Empty response from LLM")
             action_data = json.loads(raw_content)
             
             action_payload = {"action": action_data.get("action", "noop")}
@@ -95,7 +106,6 @@ def run_task(task_name, client, max_steps=20):
                 action_payload["target"] = action_data["target"]
                 
         except Exception as e:
-            # Fix: Avoid backslash in f-string expression for older Python versions
             clean_err = str(e).replace('\n', ' ')
             error_msg = f"LLM_OR_PARSE_ERROR: {clean_err}"
             action_payload = {"action": "noop"}
@@ -107,14 +117,14 @@ def run_task(task_name, client, max_steps=20):
             obs = res.get("observation", obs)
             done = res.get("done", False)
             success = res.get("success", False)
-            reward_val = res.get("reward", 0.001)
-            if reward_val == 0: reward_val = 0.001
-            
+            reward_val = clamp_score(res.get("reward", 0.001))
+
             info = res.get("info", {})
-            final_score = info.get("final_score", 0.001)
+            final_score = clamp_score(info.get("final_score", 0.001))
 
             if "error" in res and res["error"]:
-                 error_msg = str(res["error"]).replace('\n', ' ')
+                error_msg = str(res["error"]).replace('\n', ' ')
+
         except Exception as e:
             reward_val = 0.001
             final_score = 0.001
@@ -123,7 +133,6 @@ def run_task(task_name, client, max_steps=20):
             
         rewards.append(reward_val)
         
-        # Log EXACTLY as formatting spec dictates
         done_str = "true" if done else "false"
         print(f"[STEP] step={i} action={action_str} reward={reward_val:.4f} done={done_str} error={error_msg}", flush=True)
         
@@ -133,19 +142,18 @@ def run_task(task_name, client, max_steps=20):
         time.sleep(0.5)
         
     success_str = "true" if success else "false"
-    # Ensure we have the latest score if step didn't return it
+
     try:
         score_data = get(f"{ENV_BASE_URL}/score")
-        final_score = score_data.get("score", 0.001)
+        final_score = clamp_score(score_data.get("score", 0.001))
     except:
-        pass
+        final_score = clamp_score(final_score)
 
     rewards_str = ",".join([f"{r:.4f}" for r in rewards])
     print(f"[END] success={success_str} steps={steps_taken} score={final_score:.4f} rewards={rewards_str}", flush=True)
     return success
 
 def main():
-    # Priority: 1. API_KEY (LiteLLM) 2. OPENAI_API_KEY 3. HF_TOKEN
     api_key = os.getenv("API_KEY") or os.getenv("OPENAI_API_KEY") or os.getenv("HF_TOKEN")
     base_url = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
     
@@ -183,7 +191,6 @@ def main():
         try:
             run_task(task, client, max_steps=15)
         except Exception as e:
-            # Fatal fallback to satisfy the range validator
             print(f"[ERROR] Unhandled exception in task {task}: {e}", flush=True)
             print(f"[END] success=false steps=0 score=0.0010 rewards=0.0010", flush=True)
         
